@@ -1,0 +1,43 @@
+<html lang="en">
+    <head>
+        <title>PurpleAir Widgets</title>
+        <script>
+            window.addEventListener('load', function() {
+                const params = new URL(document.location).searchParams;
+                for (const sensor of params.getAll('sensors')) {
+                    const [key, show] = sensor.split('|', 2)
+                    const div = document.createElement('div');    
+                    div.id = 'PurpleAirWidget_' + show;
+                    div.innerHTML = 'Loading widget for ' + key;
+                    document.body.prepend(div);  
+                    const script = document.createElement('script');    
+                    script.src = 'https://www.purpleair.com/pa.widget.js?key=' + key + '&module=AQI&conversion=C0&average=10&layer=standard&container=PurpleAirWidget_' + show;
+                    document.body.appendChild(script);  
+                }
+            });
+
+            function addsensor() {
+                const downloaddatalink = new URL(document.getElementById('downloaddatalink').value);
+                const newshow = downloaddatalink.searchParams.get('show');
+                const newkey = downloaddatalink.searchParams.get('key');
+                if (newkey !== null && newshow !== null) {
+                    const newurl = new URL(document.location);
+                    newurl.searchParams.append("sensors", newkey + '|' + newshow);
+                    window.location = newurl;
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <div>
+            <fieldset>                
+                <legend>Add new sensor</legend>
+                <label>"Download Data" link:</label>
+                <input type="text" id="downloaddatalink" />
+                <br />
+                <input type="submit" value = "Add" onclick="addsensor()" />
+                <p><a href="https://github.com/dpaoliello/purpleair#how-to-find-the-download-data-link">How do I find the "Download Data" link?</a></p>
+            </fieldset>
+        </div>
+    </body>
+</html>
