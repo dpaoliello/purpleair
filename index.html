@@ -1,6 +1,11 @@
 <html lang="en">
     <head>
         <title>PurpleAir Widgets</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            div.current-conditions { max-width: calc(100vw - 10px); }
+        </style>
         <script>
             window.addEventListener('load', function() {
                 const params = new URL(document.location).searchParams;
