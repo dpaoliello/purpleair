@@ -7,21 +7,41 @@
             div.current-conditions { max-width: calc(100vw - 10px); }
         </style>
         <script>
+            function generateRemoveSensorURL(value) {
+                const url = new URL(document.location);
+                const keptSensors = url.searchParams.getAll('sensors').filter(item => item !== value);
+                url.searchParams.delete('sensors');
+                for (const kept of keptSensors) {
+                    url.searchParams.append('sensors', kept);
+                }
+                return url;
+            }
+
             window.addEventListener('load', function() {
+                const currentsensors = document.getElementById("currentsensors");
                 const params = new URL(document.location).searchParams;
                 for (const sensor of params.getAll('sensors')) {
+                    // Add the container div.
                     const [key, show] = sensor.split('|', 2)
-                    const div = document.createElement('div');    
+                    const div = document.createElement('div');
                     div.id = 'PurpleAirWidget_' + show;
-                    div.innerHTML = 'Loading widget for ' + key;
-                    document.body.prepend(div);  
-                    const script = document.createElement('script');    
+                    div.innerText = 'Loading widget for ' + key;
+                    // Add script that will fill the container.
+                    document.body.prepend(div);
+                    const script = document.createElement('script');
                     script.src = 'https://www.purpleair.com/pa.widget.js?key=' + key + '&module=AQI&conversion=C0&average=10&layer=standard&container=PurpleAirWidget_' + show;
-                    document.body.appendChild(script);  
+                    document.body.appendChild(script);
+                    // Show the "current sensors" fieldset.
+                    currentsensors.hidden = false;
+                    // Add to the fieldset.
+                    const p = document.createElement('p');
+                    const removeUrl = generateRemoveSensorURL(sensor);
+                    p.innerHTML = key + ' <a href="' + removeUrl + '">Remove</a>';
+                    currentsensors.prepend(p);
                 }
             });
 
-            function addsensor() {
+            function addSensor() {
                 const downloaddatalink = new URL(document.getElementById('downloaddatalink').value);
                 const newshow = downloaddatalink.searchParams.get('show');
                 const newkey = downloaddatalink.searchParams.get('key');
@@ -35,12 +55,15 @@
     </head>
     <body>
         <div>
-            <fieldset>                
+            <fieldset id="currentsensors" hidden="true">
+                <legend>Current sensors</legend>
+            </fieldset>
+            <fieldset>
                 <legend>Add new sensor</legend>
                 <label>"Download Data" link:</label>
                 <input type="text" id="downloaddatalink" />
                 <br />
-                <input type="submit" value = "Add" onclick="addsensor()" />
+                <input type="submit" value = "Add" onclick="addSensor()" />
                 <p><a href="https://github.com/dpaoliello/purpleair#how-to-find-the-download-data-link">How do I find the "Download Data" link?</a></p>
             </fieldset>
         </div>
