@@ -7,20 +7,83 @@
             div.current-conditions { max-width: calc(100vw - 10px); }
         </style>
         <script>
-            function generateRemoveSensorURL(value) {
+            /**
+                @param {(original: string[]) => string[]} f
+                @return {URL}
+            */
+            function modifyURL(f) {
                 const url = new URL(document.location);
-                const keptSensors = url.searchParams.getAll('sensors').filter(item => item !== value);
+                const modifiedSensors = f(url.searchParams.getAll('sensors'));
                 url.searchParams.delete('sensors');
-                for (const kept of keptSensors) {
-                    url.searchParams.append('sensors', kept);
+                for (const sensor of modifiedSensors) {
+                    url.searchParams.append('sensors', sensor);
                 }
                 return url;
             }
 
+            /**
+                @param {string} value
+                @return {URL}
+            */
+            function generateRemoveSensorURL(value) {
+                return modifyURL(sensors => sensors.filter(item => item !== value));
+            }
+
+            /**
+                @param {string} value
+                @return {URL}
+            */
+            function generateToTopURL(value) {
+                return modifyURL(sensors => {
+                    const newSensors = sensors.filter(item => item !== value);
+                    newSensors.push(value);
+                    return newSensors;
+                });
+            }
+
+            /**
+                @param {string} value
+                @return {URL}
+            */
+            function generateMoveUpURL(value) {
+                return modifyURL(sensors => {
+                    const sensorIndex = sensors.indexOf(value);
+                    sensors[sensorIndex] = sensors[sensorIndex + 1];
+                    sensors[sensorIndex + 1] = value;
+                    return sensors;
+                });
+            }
+
+            /**
+                @param {string} value
+                @return {URL}
+            */
+            function generateMoveDownURL(value) {
+                return modifyURL(sensors => {
+                    const sensorIndex = sensors.indexOf(value);
+                    sensors[sensorIndex] = sensors[sensorIndex - 1];
+                    sensors[sensorIndex - 1] = value;
+                    return sensors;
+                });
+            }
+
+            /**
+                @param {string} value
+                @return {URL}
+            */
+            function generateToBottomURL(value) {
+                return modifyURL(sensors => {
+                    const newSensors = sensors.filter(item => item !== value);
+                    newSensors.unshift(value);
+                    return newSensors;
+                });
+            }
+
             window.addEventListener('load', function() {
                 const currentsensors = document.getElementById("currentsensors");
-                const params = new URL(document.location).searchParams;
-                for (const sensor of params.getAll('sensors')) {
+                const allSensors = new URL(document.location).searchParams.getAll('sensors');
+                let index = 0;
+                for (const sensor of allSensors) {
                     // Add the container div.
                     const [key, show] = sensor.split('|', 2)
                     const div = document.createElement('div');
@@ -35,9 +98,28 @@
                     currentsensors.hidden = false;
                     // Add to the fieldset.
                     const p = document.createElement('p');
+                    p.innerHTML = key;
+                    if (index != allSensors.length - 1) {
+                        const topUrl = generateToTopURL(sensor);
+                        p.innerHTML += ' <a href="' + topUrl + '">To Top</a>';
+                        if (allSensors.length > 2) {
+                            const upUrl = generateMoveUpURL(sensor);
+                            p.innerHTML += ' <a href="' + upUrl + '">Move Up</a>';
+                        }
+                    }
+                    if (index != 0) {
+                        if (allSensors.length > 2) {
+                            const downUrl = generateMoveDownURL(sensor);
+                            p.innerHTML += ' <a href="' + downUrl + '">Move Down</a>';
+                        }
+                        const bottomUrl = generateToBottomURL(sensor);
+                        p.innerHTML += ' <a href="' + bottomUrl + '">To Bottom</a>';
+                    }
                     const removeUrl = generateRemoveSensorURL(sensor);
-                    p.innerHTML = key + ' <a href="' + removeUrl + '">Remove</a>';
+                    p.innerHTML += ' <a href="' + removeUrl + '">Remove</a>';
                     currentsensors.prepend(p);
+
+                    index++;
                 }
             });
 
